@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block page_title %}Provider Login{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>Provider Login</h2>
+    <p>Open providers in your default system browser — not inside this dashboard. Log in there, then use BoodleBox for premium handoff or OpenRouter for autonomous tasks.</p>
+</div>
+
+<div class="glass-card mb-6">
+    <div class="flex items-center gap-3 flex-wrap">
+        <span class="field-label m-0">Autonomous brain:</span>
+        <span class="status-badge {% if brain.configured %}status-running{% else %}status-stopped{% endif %}">
+            {{ brain.label }} — {{ 'configured' if brain.configured else 'not configured' }}
+        </span>
+    </div>
+</div>
+
+<div class="grid-2 mb-6 gap-4">
+    {% for pid, prov in providers.items() %}
+    <div class="glass-card">
+        <h3>{{ prov.name }}</h3>
+        <p class="text-xs text-muted uppercase tracking-wide mt-1">{{ prov.role | replace('_', ' ') }}</p>
+        <p class="mt-2 text-secondary text-xs font-mono text-ellipsis" title="{{ prov.login_url or prov.url }}">{{ prov.login_url or prov.url }}</p>
+        <div class="mt-4 action-row">
+            <button class="btn btn-sm" onclick="openInBrowser('{{ pid }}', this)">
+                <span class="material-icons-round icon-md">open_in_new</span> Open in Browser
+            </button>
+            {% if pid == 'boodlebox' %}
+            <button class="btn btn-success-grad btn-sm" onclick="openPlaywright('{{ pid }}', this)">
+                <span class="material-icons-round icon-md">web_asset</span> Playwright Window
+            </button>
+            {% endif %}
+        </div>
+        <p id="status-{{ pid }}" class="mt-2 text-xs text-secondary font-mono"></p>
+    </div>
+    {% endfor %}
+    {% if not providers %}
+    <div class="glass-card">
+        <div class="empty-state">
+            <span class="material-icons-round">cloud_off</span>
+            <p>No providers configured.</p>
+            <span class="empty-hint">Add providers in config/brain.json.</span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="glass-card">
+    <div class="flex justify-between items-center mb-3">
+        <h3 class="m-0">
+            <span class="material-icons-round text-accent-cyan">monitor</span>
+            Browser Worker Feed
+        </h3>
+        <div id="feed-badge" class="status-badge status-stopped">No Signal</div>
+    </div>
+    <div class="aspect-video">
+        <img id="browser-feed" alt="Browser Feed" class="img-fit" style="display:none;">
+        <div id="no-signal" class="empty-state">
+            <span class="material-icons-round">videocam_off</span>
+            <p>No active browser session</p>
+            <span class="empty-hint">The live viewport appears here while the BrowserWorker is testing.</span>
+        </div>
+    </div>
+    <p class="mt-3 text-muted text-xs">
+        Login pages and captchas stop the worker and are never treated as model answers.
+    </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function openInBrowser(provider, btn) {
+    const el = document.getElementById('status-' + provider);
+    el.textContent = 'Opening in system browser…';
+    try {
+        const res = await apiFetch('/api/browser/open', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({provider})
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            el.textContent = 'Opened: ' + data.url + (data.opened_browser ? '' : ' (no local browser found)');
+            showToast('Login page opened', 'success');
+        } else {
+            el.textContent = 'Error: ' + (data.error || 'unknown');
+            showToast(data.error || 'Failed to open browser', 'error');
+        }
+    } catch (e) {
+        el.textContent = 'Request failed';
+        showToast('Request failed', 'error');
+    }
+}
+
+async function openPlaywright(provider, btn) {
+    const confirmed = await confirmAction({
+        title: 'Launch Playwright window',
+        message: 'A headed Chromium window will be launched on this machine for manual provider login.',
+        details: { 'Provider': provider, 'Mode': 'headed Playwright session' },
+        confirmLabel: 'Launch',
+    });
+    if (!confirmed) return;
+
+    const el = document.getElementById('status-' + provider);
+    el.textContent = 'Launching Playwright window…';
+    try {
+        const res = await apiFetch('/api/browser/playwright', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({provider})
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            el.textContent = 'Playwright opened: ' + data.url;
+            showToast('Playwright window launched', 'success');
+        } else {
+            el.textContent = 'Error: ' + (data.error || 'unknown');
+            showToast(data.error || 'Playwright launch failed', 'error');
+        }
+    } catch (e) {
+        el.textContent = 'Request failed (is Playwright installed?)';
+        showToast('Request failed', 'error');
+    }
+}
+
+async function refreshFeed() {
+    const img = document.getElementById('browser-feed');
+    const noSignal = document.getElementById('no-signal');
+    const badge = document.getElementById('feed-badge');
+    try {
+        const res = await fetch('/api/browser/feed/status');
+        const data = await res.json();
+        if (data.available) {
+            img.src = `/api/browser/feed?t=${Date.now()}`;
+            img.style.display = 'block';
+            noSignal.style.display = 'none';
+            badge.className = 'status-badge status-running';
+            badge.textContent = 'Live';
+        } else {
+            img.style.display = 'none';
+            noSignal.style.display = 'flex';
+            badge.className = 'status-badge status-stopped';
+            badge.textContent = 'No Signal';
+        }
+    } catch (e) { /* server unreachable; keep last state */ }
+}
+refreshFeed();
+setInterval(refreshFeed, 2000);
+</script>
+{% endblock %}

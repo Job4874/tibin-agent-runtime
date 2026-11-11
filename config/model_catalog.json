@@ -1,0 +1,88 @@
+{
+  "task_profiles": {
+    "building_applications": {
+      "description": "Full-stack application building, debugging, browser verification, and multi-step coding plans.",
+      "preferred_models": [
+        "claude-4.6-sonnet",
+        "claude-4.6-opus",
+        "codestral",
+        "chatgpt-5.4",
+        "chatgpt-5.1",
+        "gemini-3.1-pro",
+        "boodlebot"
+      ]
+    }
+  },
+  "models": [
+    {
+      "id": "claude-4.6-sonnet",
+      "provider": "boodlebox",
+      "display_name": "Claude 4.6 Sonnet",
+      "access_mode": "browser_manual",
+      "strengths": ["coding", "multi_step_planning", "agentic_systems", "reliability"]
+    },
+    {
+      "id": "claude-4.6-opus",
+      "provider": "boodlebox",
+      "display_name": "Claude 4.6 Opus",
+      "access_mode": "browser_manual",
+      "strengths": ["deep_reasoning", "complex_applications", "automation"]
+    },
+    {
+      "id": "codestral",
+      "provider": "boodlebox",
+      "display_name": "Codestral",
+      "access_mode": "browser_manual",
+      "strengths": ["coding", "debugging", "code_generation"]
+    },
+    {
+      "id": "chatgpt-5.4",
+      "provider": "boodlebox",
+      "display_name": "ChatGPT 5.4",
+      "access_mode": "browser_manual",
+      "strengths": ["reasoning", "analysis", "instruction_following"]
+    },
+    {
+      "id": "chatgpt-5.1",
+      "provider": "boodlebox",
+      "display_name": "ChatGPT 5.1",
+      "access_mode": "browser_manual",
+      "strengths": ["reasoning", "complex_instructions", "factuality"]
+    },
+    {
+      "id": "gemini-3.1-pro",
+      "provider": "boodlebox",
+      "display_name": "Gemini 3.1 Pro",
+      "access_mode": "browser_manual",
+      "strengths": ["research", "multimodal", "complex_problem_solving"]
+    },
+    {
+      "id": "boodlebot",
+      "provider": "boodlebox",
+      "display_name": "BoodleBot",
+      "access_mode": "browser_manual",
+      "strengths": ["auto_routing", "model_selection", "general_assistance"]
+    },
+    {
+      "id": "anthropic-configured",
+      "provider": "anthropic",
+      "display_name": "Configured Anthropic API model",
+      "access_mode": "direct_api",
+      "strengths": ["coding", "reasoning", "planning"]
+    },
+    {
+      "id": "gemini-configured",
+      "provider": "gemini",
+      "display_name": "Configured Gemini API model",
+      "access_mode": "direct_api",
+      "strengths": ["research", "reasoning", "multimodal"]
+    },
+    {
+      "id": "openai-compatible-configured",
+      "provider": "openai_compatible",
+      "display_name": "Configured OpenAI-compatible API model",
+      "access_mode": "direct_api",
+      "strengths": ["coding", "reasoning", "planning"]
+    }
+  ]
+}

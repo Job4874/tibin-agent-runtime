@@ -1,0 +1,39 @@
+# Advanced artifact scanning — Semgrep SAST + Trivy config/secrets (Phase 4)
+name: Security Artifacts
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 7 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-artifacts-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: p/default
+        continue-on-error: true
+
+  trivy-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy config and secret scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '0'

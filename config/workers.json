@@ -1,0 +1,50 @@
+{
+  "ShellWorker": {
+    "enabled": true,
+    "timeout_seconds": 60,
+    "allowed_shells": ["bash", "sh", "python3", "python"]
+  },
+  "FileWorker": {
+    "enabled": true,
+    "max_file_size_bytes": 5242880,
+    "allowed_extensions": [
+      ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".md", ".txt",
+      ".html", ".css", ".sh", ".env", ".cfg", ".ini", ".toml", ".xml"
+    ]
+  },
+  "GitWorker": {
+    "enabled": true,
+    "allow_push": false,
+    "workspace_dir": "workspace/repos"
+  },
+  "CoderWorker": {
+    "enabled": true,
+    "language_support": ["python", "javascript", "bash", "generic"],
+    "lint_on_write": false,
+    "max_snippet_lines": 500
+  },
+  "ResearchWorker": {
+    "enabled": true,
+    "max_search_depth": 3,
+    "max_results": 20,
+    "file_extensions": [".py", ".js", ".ts", ".md", ".txt", ".json", ".yaml"]
+  },
+  "BrowserWorker": {
+    "enabled": true,
+    "headless": true,
+    "screenshot_on_action": true,
+    "timeout_seconds": 30
+  },
+  "VerifierWorker": {
+    "enabled": true,
+    "auto_verify": true
+  },
+  "MemoryWorker": {
+    "enabled": true,
+    "memory_file": "state/memory.json"
+  },
+  "ReportWorker": {
+    "enabled": true,
+    "reports_dir": "reports"
+  }
+}

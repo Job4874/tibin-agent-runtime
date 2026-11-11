@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block page_title %}Workers{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>Workers</h2>
+    <p>Specialized execution units for full-stack coding tasks. The ManagerAgent routes actions to the right worker; the Defender blocks unsafe actions before they execute.</p>
+</div>
+
+<div class="grid-2 gap-4">
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-accent">handyman</span> Available Workers</h3>
+        <ul class="clean-list">
+            <li><strong>ShellWorker</strong> — safe shell commands (foreground &amp; background)</li>
+            <li><strong>FileWorker</strong> — file reads, writes, and edits with secret redaction</li>
+            <li><strong>GitWorker</strong> — git workflows under <code>workspace/repos</code></li>
+            <li><strong>CoderWorker</strong> — write, analyse, lint, explain, and search code</li>
+            <li><strong>ResearchWorker</strong> — find files, grep source, summarise directories</li>
+            <li><strong>BrowserWorker</strong> — Playwright-driven browser testing</li>
+            <li><strong>VerifierWorker</strong> — HTTP and result verification</li>
+            <li><strong>MemoryWorker</strong> — context storage across runs</li>
+            <li><strong>ReportWorker</strong> — proof: observations and markdown reports</li>
+        </ul>
+    </div>
+
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-secondary">info</span> Worker Lifecycle</h3>
+        <p class="text-sm text-secondary mt-2">Workers are initialized when the ManagerAgent runs a plan. Each action result passes through the VerifierWorker before being marked successful.</p>
+        <div class="callout callout-info mt-4">
+            <span class="material-icons-round">lightbulb</span>
+            <span>If BrowserWorker is reported missing, install Playwright with <code>python3 -m playwright install chromium</code>.</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

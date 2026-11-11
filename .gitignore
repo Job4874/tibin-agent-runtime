@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env.venv/
+
+# Local secrets — never commit real keys
+.env
+.env.*
+!.env.example
+!config/env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*_token*
+*_secret*
+*secret*.json
+*credential*
+*.pat
+.netrc
+
+# Local runtime state and traces
+state/
+state/approval_secret.key
+state/browser_sessions.json
+commands/state/
+inbox/
+outbox/
+runs/
+observations/
+datasets/model_io.jsonl
+datasets/prompts/
+datasets/requests/
+datasets/training/*.jsonl
+!datasets/training/.gitkeep
+logs/
+screenshots/
+reports/checkpoints/
+reports/latest_report.md
+running/
+failed/
+workspace/
+
+# Sessions / auth
+*cookies*
+Cookies
+Login Data
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vs/
+*.swp
+*.swo
+.vscode/.ropeproject
+.idea/
+
+# Build artifacts
+node_modules/
+dist/
+build/
+*.egg-info/
+.tox/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log

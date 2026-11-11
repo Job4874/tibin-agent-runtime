@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block page_title %}Security Approvals{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>Security Approvals</h2>
+    <p>The DefenderAgent intercepts risky actions. Each decision is HMAC-signed, single-use, and expires after 60 minutes.</p>
+</div>
+
+<div class="glass-card mb-6">
+    <h3>
+        <span class="material-icons-round text-warning">gavel</span>
+        Pending Approvals
+    </h3>
+
+    {% if blocked %}
+        <div class="flex-col flex gap-3 mt-3">
+            {% for act in blocked %}
+            <div class="bg-dark-20 border-glass p-4 rounded-md">
+                <div class="flex justify-between items-start gap-4 flex-wrap">
+                    <div style="min-width:0;">
+                        <h4 class="text-warning mb-2 flex items-center gap-2">
+                            <span class="material-icons-round icon-base">block</span>
+                            Action Blocked: <span class="font-mono">{{ act.action_id }}</span>
+                        </h4>
+                        <p class="font-mono bg-dark-30 p-2 rounded-md text-danger text-xs">{{ act.error }}</p>
+                        <p class="mt-2 text-xs text-secondary font-mono">Plan: {{ act.plan_id }}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn btn-danger btn-sm approval-btn" data-decision="reject"
+                                data-plan-id="{{ act.plan_id }}" data-action-id="{{ act.action_id }}">Reject</button>
+                        <button class="btn btn-success-grad btn-sm approval-btn" data-decision="approve"
+                                data-plan-id="{{ act.plan_id }}" data-action-id="{{ act.action_id }}">Approve</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <span class="material-icons-round text-success">verified_user</span>
+            <p>No actions are pending approval.</p>
+            <span class="empty-hint">Blocked actions from the Defender will appear here for sign-off.</span>
+        </div>
+    {% endif %}
+</div>
+
+<div class="glass-card">
+    <h3>
+        <span class="material-icons-round text-secondary">receipt_long</span>
+        Approval History
+    </h3>
+    <div class="mt-3 overflow-x-auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Created</th>
+                    <th>Plan ID</th>
+                    <th>Action ID</th>
+                    <th>Decision</th>
+                    <th>Risk</th>
+                    <th>Signature</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in approvals | reverse %}
+                <tr>
+                    <td class="font-mono text-xs text-secondary">{{ (record.created_at or '')[:19].replace('T', ' ') }}</td>
+                    <td class="font-mono text-xs">{{ record.plan_id }}</td>
+                    <td class="font-mono text-xs">{{ record.action_id }}</td>
+                    <td>
+                        <span class="status-badge {% if record.decision == 'approved' %}status-running{% else %}status-failed{% endif %}">
+                            {{ (record.decision or 'unknown') | upper }}
+                        </span>
+                    </td>
+                    <td class="font-mono text-xs text-secondary">{{ record.risk_level or '—' }}</td>
+                    <td class="font-mono text-xs text-muted max-w-150 text-ellipsis" title="HMAC signature">{{ record.signature }}</td>
+                </tr>
+                {% endfor %}
+                {% if not approvals %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <span class="material-icons-round">history_toggle_off</span>
+                            <p>No approval history yet.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.approval-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+        const planId = btn.dataset.planId;
+        const actionId = btn.dataset.actionId;
+        const approve = btn.dataset.decision === 'approve';
+
+        const confirmed = await confirmAction({
+            title: approve ? 'Approve blocked action' : 'Reject blocked action',
+            message: approve
+                ? 'This signs a single-use approval. The worker will execute this action on the next run.'
+                : 'This records a signed rejection. The action will remain blocked.',
+            details: { 'Plan': planId, 'Action': actionId, 'Decision': approve ? 'APPROVE' : 'REJECT' },
+            confirmLabel: approve ? 'Sign approval' : 'Sign rejection',
+            danger: approve,
+        });
+        if (!confirmed) return;
+
+        try {
+            const res = await apiFetch(`/api/approvals/${approve ? 'approve' : 'reject'}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    plan_id: planId,
+                    action_id: actionId,
+                    reason: (approve ? 'Approved' : 'Rejected') + ' from Control Panel UI'
+                })
+            });
+            if (res.ok) {
+                showToast(approve ? 'Approval signed' : 'Rejection recorded', 'success');
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                const data = await res.json().catch(() => ({}));
+                showToast(data.error || `Failed (HTTP ${res.status})`, 'error');
+            }
+        } catch (e) {
+            showToast('Request failed', 'error');
+        }
+    });
+});
+</script>
+{% endblock %}

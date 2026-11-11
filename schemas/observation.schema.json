@@ -1,0 +1,172 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "objective_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "manager_summary": {
+      "type": "string"
+    },
+    "defender_decisions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "actions_executed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "actions_blocked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "worker_results": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "files_read": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "files_changed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "commands_run": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "browser_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "screenshots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "stdout": {
+      "type": "string"
+    },
+    "stderr": {
+      "type": "string"
+    },
+    "exit_codes": {
+      "type": "object"
+    },
+    "git_status": {
+      "type": "string"
+    },
+    "git_diff_path": {
+      "type": "string"
+    },
+    "verification_results": {
+      "type": "object"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "memory_updates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_recommendation": {
+      "type": "string"
+    },
+    "requires_model_review": {
+      "type": "boolean"
+    },
+    "report_path": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "complexity_observation": {
+      "type": "object",
+      "properties": {
+        "progress_made": {
+          "type": "boolean"
+        },
+        "what_changed": {
+          "type": "string"
+        },
+        "what_is_still_unknown": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "new_questions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "blocked_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "context_quality": {
+          "type": "string",
+          "enum": [
+            "clear",
+            "hazy",
+            "insufficient",
+            "contradictory"
+          ]
+        },
+        "recommended_next_prompt": {
+          "type": "string"
+        },
+        "recommended_next_action": {
+          "type": "string"
+        },
+        "should_compact_context": {
+          "type": "boolean"
+        },
+        "should_request_model_review": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "required": [
+    "observation_id",
+    "timestamp"
+  ]
+}

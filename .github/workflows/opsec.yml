@@ -1,0 +1,59 @@
+name: Opsec
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+  security-events: write
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  suspicious-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Block risky binaries and secrets in diff
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+          fi
+          if [ "$BASE" = "0000000000000000000000000000000000000000" ] || [ -z "$BASE" ]; then
+            echo "Initial push - skipping diff scan"
+            exit 0
+          fi
+          BLOCKED='\.(exe|dll|scr|com|msi|jar|apk|dmg|pkg)(\.|$)|(^|/)\.env$|(^|/)secrets/|(^|/)vault/\.env'
+          CHANGED=$(git diff --name-only "$BASE" "$HEAD" || true)
+          if [ -z "$CHANGED" ]; then
+            echo "No changed files"
+            exit 0
+          fi
+          echo "$CHANGED"
+          BAD=$(echo "$CHANGED" | grep -Ei "$BLOCKED" || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Suspicious files in push:"
+            echo "$BAD"
+            exit 1
+          fi
+          echo "No suspicious files in diff"

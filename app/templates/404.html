@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block page_title_tag %}{% if error_code %}{{ error_code }}{% else %}404{% endif %} — Not Found{% endblock %}
+{% block page_title %}{% if error_code %}{{ error_code }}{% else %}404{% endif %} Error{% endblock %}
+
+{% block content %}
+<div class="error-page-wrap">
+    <div class="error-page-card">
+
+        <!-- ══════════════════════════════════════════
+             LEFT PANEL — Error Identity
+             ══════════════════════════════════════════ -->
+        <div class="error-left-panel">
+
+            <!-- Status badge -->
+            <div style="margin-bottom:var(--space-4);">
+                <span class="btn btn-danger btn-sm" style="pointer-events:none;cursor:default;">
+                    {% if error_code %}{{ error_code }} — {{ error_title or 'Server Error' }}{% else %}404 Not Found{% endif %}
+                </span>
+            </div>
+
+            <!-- Title -->
+            <h1 style="font-size:var(--font-size-xl);font-weight:var(--font-weight-bold);
+                        letter-spacing:var(--letter-spacing-tight);color:var(--text-primary);
+                        margin-bottom:var(--space-2);line-height:var(--line-height-tight);">
+                {% if error_title %}{{ error_title }}{% else %}Page Not Found{% endif %}
+            </h1>
+
+            <!-- Subtitle -->
+            <p style="font-size:var(--font-size-base);color:var(--text-secondary);
+                       margin-bottom:var(--space-6);">
+                {% if error_detail %}{{ error_detail }}{% else %}The requested path does not exist on this server.{% endif %}
+            </p>
+
+            <!-- Meta table -->
+            <div class="error-meta-table">
+                <div class="error-meta-row">
+                    <span class="emr-label">Requested path</span>
+                    <span class="error-path-chip">{{ request_path or request.path }}</span>
+                </div>
+                <div class="error-meta-row">
+                    <span class="emr-label">Time</span>
+                    <span style="font-family:var(--font-mono);font-size:var(--font-size-sm);
+                                 color:var(--text-secondary);">{{ error_time }}</span>
+                </div>
+                <div class="error-meta-row">
+                    <span class="emr-label">Request ID</span>
+                    <span style="font-family:var(--font-mono);font-size:var(--font-size-sm);
+                                 color:var(--text-secondary);">{{ request_id }}</span>
+                </div>
+            </div>
+
+            <div class="error-page-divider"></div>
+
+            <!-- Action buttons -->
+            <div class="error-action-stack">
+                <a href="/" class="btn btn-primary">
+                    <span class="material-icons-round icon-md">home</span>
+                    Back to Dashboard
+                </a>
+                <button class="btn btn-secondary" onclick="window.history.back()">
+                    <span class="material-icons-round icon-md">arrow_back</span>
+                    Go Back
+                </button>
+                <button class="btn btn-ghost" id="copy-diag-btn"
+                        onclick="copyDiagnostics(this)">
+                    <span class="material-icons-round icon-md">content_copy</span>
+                    Copy Diagnostics
+                </button>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════
+             RIGHT PANEL — System Status + Recovery
+             ══════════════════════════════════════════ -->
+        <div class="error-right-panel">
+
+            <!-- System status section -->
+            <div style="font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);
+                         letter-spacing:var(--letter-spacing-wide);color:var(--text-muted);
+                         text-transform:uppercase;margin-bottom:var(--space-3);">
+                System Status
+            </div>
+
+            <div class="error-sys-rows">
+                <div class="error-sys-row">
+                    <span class="esr-key">Server</span>
+                    <span class="sidebar-status-dot sdot-ok">RUNNING</span>
+                </div>
+                <div class="error-sys-row">
+                    <span class="esr-key">Runtime</span>
+                    <span class="sidebar-status-dot {% if sys_runtime_running %}sdot-ok{% else %}sdot-off{% endif %}">
+                        {% if sys_runtime_running %}RUNNING{% else %}STOPPED{% endif %}
+                    </span>
+                </div>
+                <div class="error-sys-row">
+                    <span class="esr-key">Brain</span>
+                    <span class="sidebar-status-dot {% if sys_brain_configured %}sdot-ok{% else %}sdot-warn{% endif %}">
+                        {% if sys_brain_configured %}CONFIGURED{% else %}NOT SET{% endif %}
+                    </span>
+                </div>
+                <div class="error-sys-row">
+                    <span class="esr-key">Watcher</span>
+                    <span class="sidebar-status-dot {% if sys_watcher_running %}sdot-ok{% else %}sdot-idle{% endif %}">
+                        {% if sys_watcher_running %}RUNNING{% else %}STOPPED{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            {% if not sys_brain_configured %}
+            <div class="brain-offline-callout">
+                <strong>Brain is offline.</strong> Some pages may be unavailable.
+                Set <code>OPENROUTER_API_KEY</code> in <code>config/.env</code> to enable autonomous mode.
+            </div>
+            {% endif %}
+
+            <div class="error-page-divider"></div>
+
+            <!-- Navigation recovery -->
+            <div style="font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);
+                         letter-spacing:var(--letter-spacing-wide);color:var(--text-muted);
+                         text-transform:uppercase;margin-bottom:var(--space-3);">
+                Go Somewhere
+            </div>
+
+            <div class="error-nav-links">
+                <a href="/"            class="error-nav-link">Dashboard</a>
+                <a href="/tasks"       class="error-nav-link">Tasks</a>
+                <a href="/timeline"    class="error-nav-link">Timeline</a>
+                <a href="/plans"       class="error-nav-link">Plans</a>
+                <a href="/approvals"   class="error-nav-link">Approvals</a>
+                <a href="/reports"     class="error-nav-link">Reports</a>
+                <a href="/memory"      class="error-nav-link">Memory</a>
+                <a href="/complexity"  class="error-nav-link">Complexity</a>
+                <a href="/model_loop"  class="error-nav-link">Model Loop</a>
+                <a href="/providers"   class="error-nav-link">Providers</a>
+                <a href="/browser"     class="error-nav-link">Browser</a>
+                <a href="/workers"     class="error-nav-link">Workers</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Store diagnostic data for copying
+    const _diagData = {
+        path:      {{ (request_path or request.path) | tojson }},
+        time:      {{ error_time | tojson }},
+        requestId: {{ request_id | tojson }},
+        brain:     {{ sys_brain_status | tojson }},
+        runtime:   {{ 'running' if sys_runtime_running else 'stopped' | tojson }},
+    };
+
+    function copyDiagnostics(btn) {
+        const text = [
+            'Tibin Runtime — Diagnostic Report',
+            '──────────────────────────────────',
+            'Path:       ' + _diagData.path,
+            'Time:       ' + _diagData.time,
+            'Request ID: ' + _diagData.requestId,
+            'Brain:      ' + _diagData.brain,
+            'Runtime:    ' + _diagData.runtime,
+        ].join('\n');
+
+        navigator.clipboard.writeText(text).then(() => {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<span class="material-icons-round icon-md">check</span> Copied!';
+            btn.disabled = true;
+            setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2000);
+            showToast('Diagnostics copied to clipboard', 'success');
+        }).catch(() => {
+            showToast('Copy failed — clipboard access denied', 'error');
+        });
+    }
+</script>
+{% endblock %}

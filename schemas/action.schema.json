@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "action_id": {
+      "type": "string"
+    },
+    "worker": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "params": {
+      "type": "object"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "requires_approval": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "action_id",
+    "worker",
+    "type",
+    "params"
+  ]
+}

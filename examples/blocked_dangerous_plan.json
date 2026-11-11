@@ -1,0 +1,50 @@
+{
+  "plan_id": "plan-dangerous-001",
+  "objective_id": "obj-003",
+  "title": "Blocked Dangerous Plan",
+  "goal": "Attempt to run blocked commands.",
+  "assumptions": [],
+  "allowed_paths": [],
+  "allowed_domains": [],
+  "requested_tools": ["ShellWorker", "ReportWorker"],
+  "risk_level": "high",
+  "actions": [
+    {
+      "action_id": "act-d1",
+      "worker": "ShellWorker",
+      "type": "execute",
+      "reason": "Attempt destructive delete",
+      "params": {"command": "rm -rf /"},
+      "risk_level": "critical",
+      "requires_approval": true
+    },
+    {
+      "action_id": "act-d2",
+      "worker": "ShellWorker",
+      "type": "execute",
+      "reason": "Attempt format",
+      "params": {"command": "format C:"},
+      "risk_level": "critical",
+      "requires_approval": true
+    }
+  ],
+  "verification": "Verify they are blocked",
+  "rollback": "None",
+  "approval": false,
+  "expected_outputs": ["blocked observation"],
+  "stop_conditions": [],
+  "complexity": {
+    "problem_type": "coding",
+    "estimated_depth": "simple",
+    "requires_research": false,
+    "requires_context_recovery": false,
+    "requires_human_input": false,
+    "known_unknowns": [],
+    "assumptions": [],
+    "open_questions": [],
+    "decomposition": {
+      "milestones": [],
+      "next_smallest_action": ""
+    }
+  }
+}

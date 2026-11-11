@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="tibin-token" content="{{ api_token }}">
+    <title>{% block page_title_tag %}Tibin Runtime{% endblock %} — Tibin Agent Runtime</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- ═══════════════════════════════════════════
+             TOP HEADER
+             ═══════════════════════════════════════════ -->
+        <header class="app-header">
+            <div class="flex items-center gap-3" style="min-width:0;">
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                    <span class="material-icons-round" style="font-size:1.125rem;">menu</span>
+                </button>
+                <div class="header-title">
+                    <span class="breadcrumb-root">Runtime</span>
+                    <span class="breadcrumb-sep">/</span>
+                    <span class="page-title-text">{% block page_title %}Dashboard{% endblock %}</span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <!-- Live status chips — rendered server-side, refreshed by JS -->
+                <span id="hdr-brain-chip"
+                      class="hdr-chip {% if sys_brain_configured %}hdr-chip-online{% else %}hdr-chip-offline{% endif %}"
+                      title="Brain status">
+                    <span class="chip-dot"></span>
+                    <span class="chip-label">BRAIN {% if sys_brain_configured %}ONLINE{% else %}OFFLINE{% endif %}</span>
+                </span>
+
+                <span id="hdr-runtime-chip"
+                      class="hdr-chip {% if sys_runtime_running %}hdr-chip-online{% else %}hdr-chip-offline{% endif %}"
+                      title="Runtime status">
+                    <span class="chip-dot"></span>
+                    <span class="chip-label">{% if sys_runtime_running %}RUNNING{% else %}STOPPED{% endif %}</span>
+                </span>
+
+                <div id="header-run-indicator" class="run-indicator" title="Daemon status"></div>
+
+                <a href="/tasks" class="btn btn-primary btn-sm">
+                    <span class="material-icons-round icon-md">play_arrow</span> Run Plan
+                </a>
+            </div>
+        </header>
+
+        <!-- ═══════════════════════════════════════════
+             SIDEBAR
+             ═══════════════════════════════════════════ -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+        <nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
+            <div class="brand">
+                <span class="material-icons-round brand-icon">terminal</span>
+                <span class="brand-text">Tibin Runtime</span>
+                <span class="brand-tag">local</span>
+            </div>
+
+            <div class="nav-links">
+                <!-- ─── OPERATE ─── -->
+                <div class="nav-section-label">Operate</div>
+                <a href="/dashboard"
+                   class="{% if request.path in ['/', '/dashboard'] %}active{% endif %}"
+                   aria-current="{% if request.path in ['/', '/dashboard'] %}page{% endif %}">
+                    <span class="material-icons-round">space_dashboard</span> Dashboard
+                </a>
+                <a href="/tasks"
+                   class="{% if request.path == '/tasks' %}active{% endif %}"
+                   aria-current="{% if request.path == '/tasks' %}page{% endif %}">
+                    <span class="material-icons-round">play_circle</span> Tasks
+                </a>
+                <a href="/timeline"
+                   class="{% if request.path.startswith('/timeline') %}active{% endif %}"
+                   aria-current="{% if request.path.startswith('/timeline') %}page{% endif %}">
+                    <span class="material-icons-round">history</span> Timeline
+                </a>
+                <a href="/plans"
+                   class="{% if request.path == '/plans' %}active{% endif %}"
+                   aria-current="{% if request.path == '/plans' %}page{% endif %}">
+                    <span class="material-icons-round">account_tree</span> Plans
+                </a>
+                <a href="/approvals"
+                   class="{% if request.path == '/approvals' %}active{% endif %}"
+                   aria-current="{% if request.path == '/approvals' %}page{% endif %}">
+                    <span class="material-icons-round">gavel</span> Approvals
+                </a>
+
+                <!-- ─── INSIGHT ─── -->
+                <div class="nav-section-label">Insight</div>
+                <a href="/model_loop"
+                   class="{% if request.path == '/model_loop' %}active{% endif %}"
+                   aria-current="{% if request.path == '/model_loop' %}page{% endif %}">
+                    <span class="material-icons-round">all_inclusive</span> Model Loop
+                </a>
+                <a href="/providers"
+                   class="{% if request.path == '/providers' %}active{% endif %}"
+                   aria-current="{% if request.path == '/providers' %}page{% endif %}">
+                    <span class="material-icons-round">cloud</span> Providers
+                </a>
+                <a href="/browser"
+                   class="{% if request.path == '/browser' %}active{% endif %}"
+                   aria-current="{% if request.path == '/browser' %}page{% endif %}">
+                    <span class="material-icons-round">public</span> Browser
+                </a>
+                <a href="/complexity"
+                   class="{% if request.path == '/complexity' %}active{% endif %}"
+                   aria-current="{% if request.path == '/complexity' %}page{% endif %}">
+                    <span class="material-icons-round">insights</span> Complexity
+                </a>
+
+                <!-- ─── SYSTEM ─── -->
+                <div class="nav-section-label">System</div>
+                <a href="/reports"
+                   class="{% if request.path == '/reports' %}active{% endif %}"
+                   aria-current="{% if request.path == '/reports' %}page{% endif %}">
+                    <span class="material-icons-round">assessment</span> Reports
+                </a>
+                <a href="/memory"
+                   class="{% if request.path == '/memory' %}active{% endif %}"
+                   aria-current="{% if request.path == '/memory' %}page{% endif %}">
+                    <span class="material-icons-round">psychology</span> Memory
+                </a>
+                <a href="/workers"
+                   class="{% if request.path == '/workers' %}active{% endif %}"
+                   aria-current="{% if request.path == '/workers' %}page{% endif %}">
+                    <span class="material-icons-round">handyman</span> Workers
+                </a>
+            </div>
+
+            <!-- ─── SIDEBAR FOOTER: System Status ─── -->
+            <div class="sidebar-footer">
+                <div class="sidebar-status-rows">
+                    <div class="sidebar-status-row">
+                        <span class="srow-label">Runtime</span>
+                        <span class="sidebar-status-dot {% if sys_runtime_running %}sdot-ok{% else %}sdot-off{% endif %}"
+                              id="sftr-runtime">
+                            {% if sys_runtime_running %}RUNNING{% else %}STOPPED{% endif %}
+                        </span>
+                    </div>
+                    <div class="sidebar-status-row">
+                        <span class="srow-label">Brain</span>
+                        <span class="sidebar-status-dot {% if sys_brain_configured %}sdot-ok{% else %}sdot-warn{% endif %}"
+                              id="sftr-brain">
+                            {% if sys_brain_configured %}CONFIGURED{% else %}NOT SET{% endif %}
+                        </span>
+                    </div>
+                    <div class="sidebar-status-row">
+                        <span class="srow-label">Watcher</span>
+                        <span class="sidebar-status-dot {% if sys_watcher_running %}sdot-ok{% else %}sdot-idle{% endif %}"
+                              id="sftr-watcher">
+                            {% if sys_watcher_running %}RUNNING{% else %}STOPPED{% endif %}
+                        </span>
+                    </div>
+                </div>
+                <a href="/tasks" class="btn btn-primary btn-sm w-full">
+                    <span class="material-icons-round icon-md">play_circle</span> Run Plan
+                </a>
+            </div>
+        </nav>
+
+        <!-- ═══════════════════════════════════════════
+             MAIN WORKSPACE
+             ═══════════════════════════════════════════ -->
+        <main class="main-content" id="main-content">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- ═══════════════════════════════════════════
+             BOTTOM STATUS BAR
+             ═══════════════════════════════════════════ -->
+        <footer class="status-bar" role="status" aria-live="polite">
+            <div class="status-bar-left">
+                <span id="global-status-indicator" class="status-pill status-idle">IDLE</span>
+                <span class="divider">|</span>
+                <span id="global-status-message" class="status-bar-msg">Waiting for status…</span>
+            </div>
+            <div class="status-bar-right">
+                <span id="global-brain-status" class="text-xs">Brain: —</span>
+                <span class="divider">|</span>
+                <span id="global-run-count" class="text-xs">Runs: —</span>
+                <span class="divider">|</span>
+                <span id="global-time" class="text-xs font-mono">--:--:--</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ── Toast ── -->
+    <div id="toast" class="toast hidden" role="alert" aria-live="assertive"></div>
+
+    <!-- ── Confirmation modal ── -->
+    <div id="confirm-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="confirm-icon" class="material-icons-round text-warning">warning_amber</span>
+                <h4 id="confirm-title">Confirm action</h4>
+            </div>
+            <div class="modal-body">
+                <span id="confirm-message">Are you sure?</span>
+                <div id="confirm-details" class="modal-details hidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-ok" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         GLOBAL SCRIPTS
+         ═══════════════════════════════════════════ -->
+    <script>
+        const TIBIN_TOKEN = document.querySelector('meta[name="tibin-token"]').content;
+
+        async function apiFetch(url, opts = {}) {
+            opts.headers = Object.assign({}, opts.headers, { 'X-Tibin-Token': TIBIN_TOKEN });
+            return fetch(url, opts);
+        }
+
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast-${type}`;
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => { t.className = 'toast hidden'; }, 3500);
+        }
+
+        function confirmAction(opts = {}) {
+            return new Promise((resolve) => {
+                const overlay  = document.getElementById('confirm-overlay');
+                const title    = document.getElementById('confirm-title');
+                const msg      = document.getElementById('confirm-message');
+                const details  = document.getElementById('confirm-details');
+                const icon     = document.getElementById('confirm-icon');
+                const ok       = document.getElementById('confirm-ok');
+                const cancel   = document.getElementById('confirm-cancel');
+
+                title.textContent  = opts.title   || 'Confirm action';
+                msg.textContent    = opts.message  || 'Are you sure you want to proceed?';
+                ok.textContent     = opts.confirmLabel || 'Confirm';
+                ok.className       = opts.danger ? 'btn btn-danger' : 'btn btn-primary';
+                icon.className     = 'material-icons-round ' + (opts.danger ? 'text-danger' : 'text-warning');
+                icon.textContent   = opts.danger ? 'report' : 'warning_amber';
+
+                if (opts.details && Object.keys(opts.details).length) {
+                    details.innerHTML = Object.entries(opts.details).map(([k, v]) =>
+                        `<div class="detail-row"><span class="detail-key"></span><span class="detail-val"></span></div>`
+                    ).join('');
+                    const rows = details.querySelectorAll('.detail-row');
+                    Object.entries(opts.details).forEach(([k, v], i) => {
+                        rows[i].querySelector('.detail-key').textContent = k;
+                        rows[i].querySelector('.detail-val').textContent = v;
+                    });
+                    details.classList.remove('hidden');
+                } else {
+                    details.classList.add('hidden');
+                    details.innerHTML = '';
+                }
+
+                function close(result) {
+                    overlay.classList.remove('open');
+                    ok.removeEventListener('click', onOk);
+                    cancel.removeEventListener('click', onCancel);
+                    overlay.removeEventListener('click', onBackdrop);
+                    document.removeEventListener('keydown', onKey);
+                    resolve(result);
+                }
+                const onOk       = () => close(true);
+                const onCancel   = () => close(false);
+                const onBackdrop = (e) => { if (e.target === overlay) close(false); };
+                const onKey      = (e) => { if (e.key === 'Escape') close(false); };
+
+                ok.addEventListener('click', onOk);
+                cancel.addEventListener('click', onCancel);
+                overlay.addEventListener('click', onBackdrop);
+                document.addEventListener('keydown', onKey);
+
+                overlay.classList.add('open');
+                ok.focus();
+            });
+        }
+
+        // Mobile nav
+        (function () {
+            const toggle   = document.getElementById('nav-toggle');
+            const sidebar  = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            function closeNav() {
+                sidebar.classList.remove('open');
+                backdrop.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+            toggle.addEventListener('click', () => {
+                const isOpen = sidebar.classList.toggle('open');
+                backdrop.classList.toggle('open', isOpen);
+                document.body.style.overflow = isOpen ? 'hidden' : '';
+            });
+            backdrop.addEventListener('click', closeNav);
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeNav(); });
+        })();
+
+        // Clock
+        function updateTime() {
+            document.getElementById('global-time').textContent = new Date().toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // ── Update header chips and sidebar footer from /api/system/status ──
+        function _applyChip(el, online) {
+            if (!el) return;
+            el.className = 'hdr-chip ' + (online ? 'hdr-chip-online' : 'hdr-chip-offline');
+        }
+
+        function _applySidebarDot(el, state) {
+            // state: 'ok' | 'warn' | 'off' | 'idle'
+            if (!el) return;
+            el.className = 'sidebar-status-dot sdot-' + state;
+        }
+
+        async function fetchGlobalSystem() {
+            try {
+                const res  = await fetch('/api/system/status');
+                const data = await res.json();
+
+                const brainStatus    = (data.brain?.status || 'unknown').toLowerCase();
+                const brainOk        = brainStatus === 'ready' || brainStatus === 'ok';
+                const dashStatus     = (data.processes?.dashboard?.status || 'stopped').toLowerCase();
+                const dashHealthy    = data.processes?.dashboard_health === true;
+                const runtimeRunning = dashHealthy || dashStatus === 'running';
+                const watcherRunning = (data.processes?.watcher?.status || 'stopped').toLowerCase() === 'running';
+
+                // Header chips
+                const brainChip   = document.getElementById('hdr-brain-chip');
+                const runtimeChip = document.getElementById('hdr-runtime-chip');
+
+                if (brainChip) {
+                    _applyChip(brainChip, brainOk);
+                    brainChip.querySelector('.chip-label').textContent = 'BRAIN ' + (brainOk ? 'ONLINE' : 'OFFLINE');
+                }
+                if (runtimeChip) {
+                    _applyChip(runtimeChip, runtimeRunning);
+                    runtimeChip.querySelector('.chip-label').textContent = runtimeRunning ? 'RUNNING' : 'STOPPED';
+                }
+
+                // Sidebar footer dots
+                const sfRuntime = document.getElementById('sftr-runtime');
+                const sfBrain   = document.getElementById('sftr-brain');
+                const sfWatcher = document.getElementById('sftr-watcher');
+
+                if (sfRuntime) {
+                    _applySidebarDot(sfRuntime, runtimeRunning ? 'ok' : 'off');
+                    sfRuntime.textContent = runtimeRunning ? 'RUNNING' : 'STOPPED';
+                }
+                if (sfBrain) {
+                    _applySidebarDot(sfBrain, brainOk ? 'ok' : 'warn');
+                    sfBrain.textContent = brainOk ? 'CONFIGURED' : 'NOT SET';
+                }
+                if (sfWatcher) {
+                    _applySidebarDot(sfWatcher, watcherRunning ? 'ok' : 'idle');
+                    sfWatcher.textContent = watcherRunning ? 'RUNNING' : 'STOPPED';
+                }
+
+                // Bottom bar brain
+                const brainEl = document.getElementById('global-brain-status');
+                if (brainEl) {
+                    brainEl.textContent = 'Brain: ' + (data.brain?.status || '—');
+                    brainEl.style.color = brainOk ? 'var(--success)' : 'var(--text-secondary)';
+                }
+
+                const runEl = document.getElementById('global-run-count');
+                const runs  = data.processes?.runs;
+                if (runEl && runs !== undefined) runEl.textContent = 'Runs: ' + runs;
+            } catch (e) { /* server unreachable; keep last known state */ }
+        }
+
+        // ── Global status polling ──
+        async function fetchGlobalStatus() {
+            try {
+                const res  = await fetch('/api/status');
+                const data = await res.json();
+                const indicator = document.getElementById('global-status-indicator');
+                const msg       = document.getElementById('global-status-message');
+                const runDot    = document.getElementById('header-run-indicator');
+
+                const s = (data.status || 'idle').toLowerCase();
+                indicator.textContent = s.toUpperCase().replace('_', ' ');
+                indicator.className   = 'status-pill';
+                runDot.className      = 'run-indicator';
+                if      (s === 'running')          { indicator.classList.add('status-running'); runDot.classList.add('running'); }
+                else if (s === 'pending_approval') { indicator.classList.add('status-pending'); runDot.classList.add('pending'); }
+                else if (s === 'completed')        { indicator.classList.add('status-success'); runDot.classList.add('complete'); }
+                else if (s === 'failed')           { indicator.classList.add('status-danger');  runDot.classList.add('failed'); }
+                else                               { indicator.classList.add('status-idle'); }
+
+                msg.textContent = data.message || 'Idle';
+            } catch (e) { /* ignore */ }
+        }
+
+        setInterval(() => { fetchGlobalStatus(); fetchGlobalSystem(); }, 4000);
+        fetchGlobalStatus();
+        fetchGlobalSystem();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block page_title %}Run {{ run_id }}{% endblock %}
+
+{% block content %}
+<div class="mb-4 flex items-center gap-3">
+    <a href="/timeline" class="btn btn-sm no-underline">
+        <span class="material-icons-round icon-md">arrow_back</span> Timeline
+    </a>
+    <h2 class="text-lg font-semibold flex items-center gap-2 m-0">
+        <span class="material-icons-round text-accent icon-base">terminal</span>
+        <span class="font-mono">{{ run_id }}</span>
+    </h2>
+</div>
+
+<div class="grid-2 gap-6">
+    {% if report %}
+    <div class="glass-card card-top-success flex-col flex" style="max-height: 640px;">
+        <div class="flex items-center gap-2 mb-4">
+            <span class="material-icons-round text-success">assessment</span>
+            <h3 class="m-0">Report</h3>
+            <span class="tag tag-success ml-auto">MARKDOWN</span>
+        </div>
+        <pre class="flex-1" style="overflow-y: auto;">{{ report }}</pre>
+    </div>
+    {% endif %}
+
+    <div class="glass-card flex-col flex {% if not report %}col-span-2{% endif %} card-top-cyan" style="max-height: 640px;">
+        <div class="flex items-center gap-2 mb-4">
+            <span class="material-icons-round text-accent-cyan">list_alt</span>
+            <h3 class="m-0">Trace Events</h3>
+            <span class="tag tag-cyan ml-auto">{{ trace_lines | length }} events</span>
+        </div>
+        {% if trace_lines %}
+        <div class="flex-1" style="overflow-y: auto;">
+            {% for ev in trace_lines %}
+            {% set ev_type = ev.get('event', 'unknown') %}
+            {% set is_error = ev_type in ['action_error', 'loop_failed', 'defender_block'] %}
+            {% set is_success = ev_type in ['loop_end', 'action_complete'] and ev.get('status') not in ['failed', 'error'] %}
+            <div class="p-3 rounded-lg mb-2 flex items-start gap-3 text-sm border-glass"
+                 style="background: var(--bg-surface-hover);">
+                <span class="material-icons-round icon-md flex-shrink-0 mt-0.5
+                    {% if is_error %}text-danger{% elif is_success %}text-success{% else %}text-accent-cyan{% endif %}">
+                    {% if is_error %}error_outline{% elif is_success %}check_circle{% else %}radio_button_checked{% endif %}
+                </span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="tag {% if is_error %}tag-danger{% elif is_success %}tag-success{% else %}tag-cyan{% endif %}">{{ ev_type }}</span>
+                        {% if ev.get('status') %}
+                        <span class="text-xs text-secondary">{{ ev.get('status') }}</span>
+                        {% endif %}
+                    </div>
+                    {% if ev.get('message') or ev.get('action') or ev.get('error') %}
+                    <p class="text-xs text-secondary font-mono" style="word-break: break-word;">
+                        {{ ev.get('message') or ev.get('action') or ev.get('error') or '' }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% if ev.get('ts') or ev.get('timestamp') %}
+                <span class="text-xs text-muted font-mono flex-shrink-0">{{ (ev.get('ts') or ev.get('timestamp') or '')[:19] }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <span class="material-icons-round">info</span>
+            No <code>trace.jsonl</code> file found for this run. Traces are generated during autonomous plan execution.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

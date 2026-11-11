@@ -1,0 +1,63 @@
+{
+  "plan_id": "plan-browser-001",
+  "objective_id": "obj-005",
+  "title": "Browser Interaction Test",
+  "goal": "Test advanced playwright interactions including evaluate block",
+  "assumptions": [],
+  "allowed_paths": [],
+  "allowed_domains": ["example.com"],
+  "requested_tools": ["BrowserWorker"],
+  "risk_level": "medium",
+  "actions": [
+    {
+      "action_id": "act-b1",
+      "worker": "BrowserWorker",
+      "type": "launch_temporary_session",
+      "reason": "Start browser",
+      "params": {"headed": false},
+      "risk_level": "low",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-b2",
+      "worker": "BrowserWorker",
+      "type": "open_url",
+      "reason": "Navigate to example page",
+      "params": {
+        "url": "https://example.com"
+      },
+      "risk_level": "low",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-b3",
+      "worker": "BrowserWorker",
+      "type": "evaluate",
+      "reason": "Inject custom JS to read or modify page",
+      "params": {
+        "js_code": "document.body.style.backgroundColor = 'red';"
+      },
+      "risk_level": "medium",
+      "requires_approval": false
+    }
+  ],
+  "verification": "Check observation",
+  "rollback": "None",
+  "approval": false,
+  "expected_outputs": ["success status"],
+  "stop_conditions": [],
+  "complexity": {
+    "problem_type": "scraping",
+    "estimated_depth": "shallow",
+    "requires_research": false,
+    "requires_context_recovery": false,
+    "requires_human_input": false,
+    "known_unknowns": [],
+    "assumptions": [],
+    "open_questions": [],
+    "decomposition": {
+      "milestones": ["Opened page", "Evaluated JS"],
+      "next_smallest_action": "Run plan"
+    }
+  }
+}

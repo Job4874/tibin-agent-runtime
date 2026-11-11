@@ -1,0 +1,68 @@
+{
+  "plan_id": "plan-browser-001",
+  "objective_id": "obj-002",
+  "title": "Browser Research Plan",
+  "goal": "Launch browser, visit python.org, get title and extract text.",
+  "assumptions": ["Playwright is installed"],
+  "allowed_paths": [],
+  "allowed_domains": ["python.org"],
+  "requested_tools": ["BrowserWorker", "ReportWorker"],
+  "risk_level": "low",
+  "actions": [
+    {
+      "action_id": "act-b1",
+      "worker": "BrowserWorker",
+      "type": "open_url",
+      "reason": "Open Python homepage",
+      "params": {"session_id": "session_test", "url": "https://www.python.org"},
+      "risk_level": "low",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-b2",
+      "worker": "BrowserWorker",
+      "type": "get_title",
+      "reason": "Verify page title",
+      "params": {"session_id": "session_test"},
+      "risk_level": "low",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-b3",
+      "worker": "BrowserWorker",
+      "type": "extract_text",
+      "reason": "Extract visible text",
+      "params": {"session_id": "session_test"},
+      "risk_level": "low",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-b4",
+      "worker": "BrowserWorker",
+      "type": "screenshot",
+      "reason": "Screenshot homepage",
+      "params": {"session_id": "session_test", "name": "python_homepage"},
+      "risk_level": "low",
+      "requires_approval": false
+    }
+  ],
+  "verification": "Check screenshot and text output",
+  "rollback": "None",
+  "approval": false,
+  "expected_outputs": ["screenshot", "text snippet"],
+  "stop_conditions": ["URL blocked"],
+  "complexity": {
+    "problem_type": "browser",
+    "estimated_depth": "simple",
+    "requires_research": false,
+    "requires_context_recovery": false,
+    "requires_human_input": false,
+    "known_unknowns": [],
+    "assumptions": [],
+    "open_questions": [],
+    "decomposition": {
+      "milestones": ["Visited Python org"],
+      "next_smallest_action": ""
+    }
+  }
+}

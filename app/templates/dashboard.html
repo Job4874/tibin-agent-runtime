@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>Runtime Overview</h2>
+    <p>Local agent runtime status, plan queue, and quick actions. OpenRouter drives autonomous tasks; BoodleBox is the premium handoff workspace.</p>
+</div>
+
+<div class="grid-2 mb-6">
+    <!-- Runtime Status Card -->
+    <div class="glass-card card-top-primary">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="m-0">
+                <span class="material-icons-round text-accent">memory</span>
+                Runtime Status
+            </h3>
+            <div id="status-indicator" class="status-badge status-stopped">CHECKING…</div>
+        </div>
+
+        <div class="bg-dark-30 p-3 rounded-md border-glass mb-4">
+            <p id="status-message" class="font-mono text-sm text-primary mb-1">Waiting for system status…</p>
+            <p id="status-time" class="text-xs text-muted font-mono"></p>
+        </div>
+
+        <div class="grid-2 gap-4 mt-4">
+            <div>
+                <span class="field-label">Active Brain</span>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="status-badge {% if brain.configured %}status-running{% else %}status-stopped{% endif %}">
+                        {{ brain.status }}
+                    </span>
+                    <span class="text-sm font-mono">{{ brain.label }}</span>
+                </div>
+            </div>
+            <div>
+                <span class="field-label">System Info</span>
+                <p id="install-info" class="text-xs font-mono text-secondary mt-1 text-ellipsis">Loading…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Card -->
+    <div class="glass-card card-top-purple">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="m-0">
+                <span class="material-icons-round text-accent-purple">query_stats</span>
+                Queue Statistics
+            </h3>
+            <button class="btn btn-ghost btn-xs" onclick="fetchStats()" title="Refresh stats">
+                <span class="material-icons-round icon-md">refresh</span>
+            </button>
+        </div>
+
+        <div class="grid-3 gap-3 mt-4">
+            <div class="stat-block">
+                <div class="metric-xl text-accent" id="stat-val">—</div>
+                <div class="metric-label">Validated Plans</div>
+            </div>
+            <div class="stat-block">
+                <div class="metric-xl text-danger" id="stat-rej">—</div>
+                <div class="metric-label">Rejected Plans</div>
+            </div>
+            <div class="stat-block">
+                <div class="metric-xl text-success" id="stat-obs">—</div>
+                <div class="metric-label">Observations</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2 gap-4">
+    <div class="glass-card">
+        <h3>
+            <span class="material-icons-round text-success">bolt</span>
+            Quick Actions
+        </h3>
+        <p class="text-sm text-secondary mt-1 mb-4">Run a plan, open the provider handoff, or inspect recent runs.</p>
+        <div class="action-row">
+            <a href="/tasks" class="btn btn-primary">
+                <span class="material-icons-round icon-base">play_circle</span> Run Plan
+            </a>
+            <a href="/timeline" class="btn">
+                <span class="material-icons-round icon-base">history</span> Timeline
+            </a>
+            <a href="/providers" class="btn">
+                <span class="material-icons-round icon-base">cloud</span> Providers
+            </a>
+            <a href="/browser" class="btn">
+                <span class="material-icons-round icon-base">login</span> Provider Login
+            </a>
+            <button class="btn btn-ghost" onclick="fetchStatus(); fetchStats(); showToast('Refreshed', 'info');">
+                <span class="material-icons-round icon-base">sync</span> Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <h3>
+            <span class="material-icons-round text-warning">security</span>
+            Safety &amp; Verification
+        </h3>
+        <ul class="clean-list mt-2">
+            <li><strong>Defender</strong> — blocks destructive commands and unapproved risky actions.</li>
+            <li><strong>Verifier</strong> — auto-checks every worker result before marking success.</li>
+            <li><strong>CoderWorker</strong> — write, analyse, lint, and search code files.</li>
+            <li><strong>ResearchWorker</strong> — find files, grep source, summarise directories.</li>
+            <li><strong>Reporter</strong> — writes proof (observation + markdown report) for every run.</li>
+            <li><strong>Memory</strong> — stores what worked and what failed across runs.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function fetchStatus() {
+    try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+
+        const indicator = document.getElementById('status-indicator');
+        const msg = document.getElementById('status-message');
+        const time = document.getElementById('status-time');
+
+        indicator.className = 'status-badge';
+        indicator.textContent = (data.status || 'unknown').toUpperCase().replace('_', ' ');
+
+        if (data.status === 'running') indicator.classList.add('status-running');
+        else if (data.status === 'pending_approval') indicator.classList.add('status-pending');
+        else if (data.status === 'failed') indicator.classList.add('status-failed');
+        else indicator.classList.add('status-stopped');
+
+        msg.textContent = data.message || 'No active message';
+        time.textContent = data.timestamp ? new Date(data.timestamp).toLocaleString() : '';
+    } catch (e) {
+        const msg = document.getElementById('status-message');
+        msg.textContent = 'Status unavailable — is the server running?';
+    }
+}
+
+async function fetchStats() {
+    try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        document.getElementById('stat-val').textContent = data.validated_plans;
+        document.getElementById('stat-rej').textContent = data.rejected_plans;
+        document.getElementById('stat-obs').textContent = data.observations;
+    } catch (e) { /* keep last values */ }
+}
+
+async function fetchSystem() {
+    try {
+        const res = await fetch('/api/system/status');
+        const data = await res.json();
+        const inst = data.processes?.install || {};
+        const dash = data.processes?.dashboard || {};
+        const el = document.getElementById('install-info');
+        if (el) {
+            el.textContent = `${inst.git_branch || '?'} @ ${inst.git_commit || '?'} · dashboard ${dash.status || '?'}`;
+            el.title = `Root: ${inst.install_root || 'N/A'}`;
+        }
+    } catch (e) { /* ignore */ }
+}
+
+fetchStatus();
+fetchStats();
+fetchSystem();
+setInterval(() => { fetchStatus(); fetchStats(); fetchSystem(); }, 5000);
+</script>
+{% endblock %}

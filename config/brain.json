@@ -1,0 +1,26 @@
+{
+  "autonomous_brain": "openrouter",
+  "premium_workspace": "boodlebox",
+  "providers": {
+    "openrouter": {
+      "name": "OpenRouter",
+      "role": "autonomous_api",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "default_model": "openrouter/free",
+      "login_url": "https://openrouter.ai/keys"
+    },
+    "boodlebox": {
+      "name": "BoodleBox Premium",
+      "role": "premium_workspace",
+      "url": "https://box.boodle.ai/launch/",
+      "login_url": "https://box.boodle.ai/launch/"
+    },
+    "chatgpt": {
+      "name": "ChatGPT Pro",
+      "role": "specialist",
+      "url": "https://chatgpt.com/",
+      "login_url": "https://chatgpt.com/"
+    }
+  }
+}

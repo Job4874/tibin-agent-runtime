@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "current_objective": {
+      "type": "string"
+    },
+    "current_milestone": {
+      "type": "string"
+    },
+    "what_was_tried": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "what_worked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "what_failed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "lessons_learned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recurring_commands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "environment_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "worker_success_failure_counts": {
+      "type": "object"
+    }
+  }
+}

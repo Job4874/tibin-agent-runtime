@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block page_title %}Timeline{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>Run Timeline</h2>
+    <p>Recent runs with traces are stored under <code>runs/&lt;run_id&gt;/trace.jsonl</code>.</p>
+</div>
+
+<div class="glass-card">
+    <div class="overflow-x-auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Run ID</th>
+                    <th>Status</th>
+                    <th>Trace</th>
+                    <th>Report</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for run in runs %}
+                <tr>
+                    <td class="font-mono text-sm">
+                        <a href="/timeline/{{ run.run_id }}" class="flex items-center gap-2">
+                            <span class="material-icons-round icon-md text-muted">terminal</span>
+                            {{ run.run_id }}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="status-badge {% if run.status == 'completed' %}status-running{% elif run.status == 'failed_no_brain' or run.status == 'failed' %}status-failed{% else %}status-pending{% endif %}">
+                            {{ run.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if run.has_trace %}
+                            <span class="material-icons-round text-success icon-md">check</span>
+                        {% else %}
+                            <span class="material-icons-round text-muted icon-md">remove</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if run.has_report %}
+                            <span class="material-icons-round text-success icon-md">check</span>
+                        {% else %}
+                            <span class="material-icons-round text-muted icon-md">remove</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+                        <a href="/timeline/{{ run.run_id }}" class="btn btn-xs">Details</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <span class="material-icons-round">auto_awesome_motion</span>
+                            <p>No runs yet.</p>
+                            <a href="/tasks" class="btn btn-sm mt-4">Run your first plan</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

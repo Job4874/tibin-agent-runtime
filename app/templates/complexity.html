@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block page_title %}Complexity Engine{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>Complexity Engine</h2>
+    <p>Keeps long coding tasks from getting lost across runs: context quality, blockers, open questions, and continuation prompts.</p>
+</div>
+
+<div class="grid-3 gap-4">
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-accent">flag</span> Current Status</h3>
+        <div class="status-badge mt-2 {% if summary.status in ['completed', 'success'] %}status-running{% elif summary.status in ['pending_approval', 'blocked'] %}status-pending{% else %}status-stopped{% endif %}">
+            {{ summary.status | upper }}
+        </div>
+        <p class="muted mt-2 font-mono text-xs">Plan: {{ summary.plan_id or "—" }}</p>
+        <p class="muted font-mono text-xs">Objective: {{ summary.objective_id or "—" }}</p>
+    </div>
+
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-accent-cyan">high_quality</span> Context Quality</h3>
+        <div class="metric-xl mt-2">{{ summary.context_quality or "unknown" }}</div>
+        <p class="metric-label">clear / hazy / insufficient / contradictory</p>
+    </div>
+
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-success">arrow_forward</span> Next Action</h3>
+        <p class="text-sm text-secondary mt-2">{{ summary.next_action or "No recommended action recorded yet." }}</p>
+    </div>
+</div>
+
+<div class="glass-card mt-4">
+    <div class="action-row">
+        <button class="btn btn-sm" onclick="generatePrompt(this)">
+            <span class="material-icons-round icon-md">edit_note</span> Generate Next Prompt
+        </button>
+        <button class="btn btn-sm" onclick="createCheckpoint(this)">
+            <span class="material-icons-round icon-md">bookmark_add</span> Create Checkpoint
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="window.location.reload()">
+            <span class="material-icons-round icon-md">refresh</span> Refresh
+        </button>
+    </div>
+</div>
+
+<div class="grid-2 mt-4 gap-4">
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-danger">block</span> Blockers</h3>
+        {% if summary.blockers %}
+            <div class="clean-list">{% for blocker in summary.blockers %}<div class="mb-2">&bull; {{ blocker }}</div>{% endfor %}</div>
+        {% elif blockers %}
+            <pre class="mt-2">{{ blockers }}</pre>
+        {% else %}
+            <div class="empty-state"><span class="material-icons-round">check_circle</span><p>No blockers recorded.</p></div>
+        {% endif %}
+    </div>
+
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-warning">help_outline</span> Open Questions</h3>
+        {% if summary.open_questions %}
+            <div class="clean-list">{% for question in summary.open_questions %}<div class="mb-2">&bull; {{ question }}</div>{% endfor %}</div>
+        {% elif open_questions %}
+            <pre class="mt-2">{{ open_questions }}</pre>
+        {% else %}
+            <div class="empty-state"><span class="material-icons-round">quiz</span><p>No open questions recorded.</p></div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2 mt-4 gap-4">
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-success">trending_up</span> Progress</h3>
+        {% if progress %}<pre class="mt-2">{{ progress }}</pre>
+        {% else %}<div class="empty-state"><span class="material-icons-round">pending</span><p>No progress file found.</p></div>{% endif %}
+    </div>
+
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-secondary">psychology_alt</span> Assumptions</h3>
+        {% if assumptions %}<pre class="mt-2">{{ assumptions }}</pre>
+        {% else %}<div class="empty-state"><span class="material-icons-round">notes</span><p>No assumptions file found.</p></div>{% endif %}
+    </div>
+</div>
+
+<div class="glass-card mt-4">
+    <h3><span class="material-icons-round text-secondary">summarize</span> Latest Observation Summary</h3>
+    <pre class="mt-2">{{ summary | tojson(indent=2) }}</pre>
+</div>
+
+<div class="glass-card mt-4">
+    <h3><span class="material-icons-round text-secondary">edit_note</span> Next Prompt</h3>
+    {% if next_prompt or model_prompt %}<pre class="mt-2">{{ next_prompt or model_prompt }}</pre>
+    {% else %}<div class="empty-state"><span class="material-icons-round">drafts</span><p>No prompt generated yet.</p></div>{% endif %}
+</div>
+
+<div class="glass-card mt-4">
+    <h3><span class="material-icons-round text-secondary">link</span> Continuation Context</h3>
+    {% if continuation_context %}<pre class="mt-2">{{ continuation_context }}</pre>
+    {% else %}<div class="empty-state"><span class="material-icons-round">link_off</span><p>No continuation context found.</p></div>{% endif %}
+</div>
+
+<div class="glass-card mt-4">
+    <h3><span class="material-icons-round text-secondary">assessment</span> Latest Report</h3>
+    {% if latest_report %}<pre class="mt-2">{{ latest_report }}</pre>
+    {% else %}<div class="empty-state"><span class="material-icons-round">description</span><p>No latest report found.</p></div>{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function generatePrompt(btn) {
+    btn.disabled = true;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<span class="material-icons-round icon-md spin">autorenew</span> Generating…';
+    try {
+        const res = await apiFetch('/api/complexity/generate_prompt', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            showToast('Prompt generated', 'success');
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            showToast('Prompt generation failed: ' + (data.stderr || data.stdout || data.error || 'Unknown error'), 'error');
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+    } catch (e) {
+        showToast('Request failed', 'error');
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+}
+
+async function createCheckpoint(btn) {
+    btn.disabled = true;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<span class="material-icons-round icon-md spin">autorenew</span> Saving…';
+    try {
+        const res = await apiFetch('/api/complexity/checkpoint', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            showToast('Checkpoint created: ' + data.checkpoint_path, 'success');
+        } else {
+            showToast(data.error || 'Checkpoint failed', 'error');
+        }
+    } catch (e) {
+        showToast('Request failed', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+}
+</script>
+<style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+{% endblock %}

@@ -1,0 +1,44 @@
+{
+  "allowed_read_paths": [
+    ".",
+    "workspace",
+    "workspace/repos",
+    "runs",
+    "reports",
+    "observations",
+    "state",
+    "logs",
+    "examples",
+    "inbox",
+    "outbox",
+    "datasets"
+  ],
+  "allowed_write_paths": [
+    ".",
+    "workspace",
+    "workspace/repos",
+    "runs",
+    "reports",
+    "observations",
+    "state",
+    "logs",
+    "inbox",
+    "outbox",
+    "datasets",
+    "screenshots"
+  ],
+  "blocked_paths": [
+    "/etc/passwd",
+    "/etc/shadow",
+    "/etc/sudoers",
+    "/root",
+    "~/.ssh",
+    "~/.gnupg",
+    "~/.aws",
+    "~/.config/gcloud",
+    "/proc",
+    "/sys",
+    "C:\\Windows",
+    "C:\\Users\\Public"
+  ]
+}

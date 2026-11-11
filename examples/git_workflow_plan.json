@@ -1,0 +1,64 @@
+{
+  "plan_id": "plan-git-001",
+  "objective_id": "obj-008",
+  "title": "Git Workflow Test",
+  "goal": "Test init, commit, and checkout",
+  "assumptions": [],
+  "allowed_paths": [],
+  "allowed_domains": [],
+  "requested_tools": ["GitWorker", "FileWorker"],
+  "risk_level": "medium",
+  "actions": [
+    {
+      "action_id": "act-g1",
+      "worker": "GitWorker",
+      "type": "init",
+      "reason": "Initialize repo",
+      "params": {},
+      "risk_level": "low",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-g2",
+      "worker": "GitWorker",
+      "type": "commit",
+      "reason": "Commit changes",
+      "params": {
+        "message": "Initial commit"
+      },
+      "risk_level": "high",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-g3",
+      "worker": "GitWorker",
+      "type": "checkout",
+      "reason": "Create new branch",
+      "params": {
+        "branch": "feature/test",
+        "create": true
+      },
+      "risk_level": "medium",
+      "requires_approval": false
+    }
+  ],
+  "verification": "Check observation",
+  "rollback": "None",
+  "approval": false,
+  "expected_outputs": ["success status"],
+  "stop_conditions": [],
+  "complexity": {
+    "problem_type": "scripting",
+    "estimated_depth": "shallow",
+    "requires_research": false,
+    "requires_context_recovery": false,
+    "requires_human_input": false,
+    "known_unknowns": [],
+    "assumptions": [],
+    "open_questions": [],
+    "decomposition": {
+      "milestones": ["Initialized", "Committed", "Checked out"],
+      "next_smallest_action": "Run plan"
+    }
+  }
+}

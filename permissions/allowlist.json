@@ -1,0 +1,10 @@
+{
+  "commands": [
+    "git status",
+    "git diff",
+    "python --version",
+    "npm test",
+    "pytest",
+    "npm run smoke"
+  ]
+}

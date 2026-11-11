@@ -1,0 +1,20 @@
+{
+  "active_provider": "file",
+  "providers": {
+    "file": {
+      "enabled": true
+    },
+    "openai_compatible": {
+      "enabled": true,
+      "api_key_env": "OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "model": "openrouter/free",
+      "timeout_seconds": 90
+    },
+    "anthropic": {
+      "enabled": true,
+      "model": "claude-3-opus-20240229",
+      "timeout_seconds": 90
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "allowed_domains": [
+    "github.com",
+    "python.org",
+    "pypi.org",
+    "npmjs.com",
+    "stackoverflow.com",
+    "developer.mozilla.org",
+    "en.wikipedia.org"
+  ],
+  "blocked_domains": [
+    "bankofamerica.com",
+    "chase.com",
+    "paypal.com",
+    "coinbase.com"
+  ]
+}

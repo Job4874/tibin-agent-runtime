@@ -1,0 +1,27 @@
+{
+  "active_browser_provider": "boodlebox",
+  "providers": {
+    "boodlebox": {
+      "name": "BoodleBox",
+      "url": "https://box.boodle.ai/launch/chat",
+      "mode": "manual_handoff",
+      "auth_strategy": "existing_system_browser_profile",
+      "system_profile_auth_expected": true,
+      "preferred_system_browsers": [
+        "chrome",
+        "msedge"
+      ],
+      "requires_user_login": true,
+      "allow_browser_automation": false,
+      "notes": "Open in the user's existing Chrome/Edge profile. The runtime must not read cookies, passwords, or profile databases."
+    }
+  },
+  "safety": {
+    "never_bypass_login": true,
+    "never_bypass_captcha": true,
+    "never_read_passwords": true,
+    "never_read_cookies": true,
+    "never_use_real_profile_without_approval": true,
+    "raw_response_never_executes": true
+  }
+}

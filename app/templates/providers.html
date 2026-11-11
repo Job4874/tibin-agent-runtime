@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block page_title %}Providers{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>LLM Providers</h2>
+    <p>Connect BoodleBox or other providers to generate candidate plans. The runtime validates and executes locally — API keys live in environment variables only, never in config files.</p>
+</div>
+
+{% if config_error %}
+<div class="callout callout-danger mb-6">
+    <span class="material-icons-round">error_outline</span>
+    <span><strong>Provider configuration unavailable:</strong> {{ config_error }} Fix <code>config/model_providers.json</code> and reload.</span>
+</div>
+{% endif %}
+
+<div class="grid-2 mb-6">
+    <div class="glass-card">
+        <h3>
+            <span class="material-icons-round text-accent">cloud</span>
+            Active Provider
+        </h3>
+
+        <div class="bg-dark-20 p-3 rounded-md border-glass mb-4 mt-3 flex justify-between items-center gap-3 flex-wrap">
+            <div>
+                <span class="field-label">Autonomous Brain</span>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="status-badge {% if brain.configured %}status-running{% else %}status-stopped{% endif %}">
+                        {{ brain.status }}
+                    </span>
+                    <span class="text-sm font-mono">{{ brain.label }}</span>
+                </div>
+            </div>
+            <button id="health-btn" class="btn btn-sm" onclick="checkStatus(this)">
+                <span class="material-icons-round icon-md">monitor_heart</span> Health Check
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2 mb-3">
+            <span class="field-label m-0">Active:</span>
+            <span class="font-mono text-sm">{{ active_name }}</span>
+            {% if status.status %}
+            <span class="status-badge {% if status.status.status == 'ok' %}status-running{% else %}status-stopped{% endif %}">
+                {{ status.status.status or 'unknown' }}
+            </span>
+            {% endif %}
+        </div>
+
+        <div class="action-row">
+            {% for pid, prov in external_providers.items() %}
+            <button class="btn btn-sm" onclick="openLogin('{{ pid }}', this)">
+                <span class="material-icons-round icon-md">login</span>
+                Login: {{ prov.name }}
+            </button>
+            {% endfor %}
+            {% if not external_providers %}
+            <p class="text-sm text-muted">No external providers configured for login.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="m-0">
+                <span class="material-icons-round text-warning">account_tree</span>
+                Plan Queue
+            </h3>
+            <button class="btn btn-success-grad btn-sm" onclick="runNext(this)">
+                <span class="material-icons-round icon-md">play_arrow</span> Run Next
+            </button>
+        </div>
+
+        <div class="grid-3 gap-3 mt-4">
+            <div class="stat-block">
+                <div class="metric-xl text-primary">{{ candidate_plans }}</div>
+                <div class="metric-label">Candidates</div>
+            </div>
+            <div class="stat-block">
+                <div class="metric-xl text-danger">{{ rejected_plans }}</div>
+                <div class="metric-label">Rejected</div>
+            </div>
+            <div class="stat-block">
+                <div class="metric-xl text-success">{{ validated_plans }}</div>
+                <div class="metric-label">Validated</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2 mb-6 gap-4">
+    <div class="glass-card">
+        <h3>
+            <span class="material-icons-round text-secondary">data_object</span>
+            Latest Prompt
+        </h3>
+        {% if latest_prompt %}
+        <pre class="mt-2">{{ latest_prompt }}</pre>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-icons-round">drafts</span>
+            <p>No prompt generated yet.</p>
+            <span class="empty-hint">Generate one from the Model Loop page.</span>
+        </div>
+        {% endif %}
+    </div>
+    <div class="glass-card">
+        <h3>
+            <span class="material-icons-round text-secondary">output</span>
+            Latest Raw Response
+        </h3>
+        {% if latest_response %}
+        <pre class="mt-2">{{ latest_response }}</pre>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-icons-round">hourglass_empty</span>
+            <p>No provider response received yet.</p>
+            <span class="empty-hint">Responses land in inbox/provider_responses/.</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="glass-card">
+    <h3>
+        <span class="material-icons-round text-accent">settings_suggest</span>
+        Configured Providers
+    </h3>
+    <div class="mt-3 overflow-x-auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Provider</th>
+                    <th>Status</th>
+                    <th>Model</th>
+                    <th>Key Source</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for name, config in all_providers.items() %}
+                <tr>
+                    <td class="font-mono text-sm">{{ name }}{% if name == active_name %} <span class="status-badge status-running ml-2">active</span>{% endif %}</td>
+                    <td>
+                        <span class="status-badge {% if config.enabled %}status-running{% else %}status-stopped{% endif %}">
+                            {{ "enabled" if config.enabled else "disabled" }}
+                        </span>
+                    </td>
+                    <td class="font-mono text-xs">{{ config.model or '—' }}</td>
+                    <td class="font-mono text-xs text-muted">{{ config.api_key_env or 'none required' }}</td>
+                </tr>
+                {% endfor %}
+                {% if not all_providers %}
+                <tr>
+                    <td colspan="4">
+                        <div class="empty-state">
+                            <span class="material-icons-round">cloud_off</span>
+                            <p>No providers configured.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function openLogin(provider, btn) {
+    try {
+        const res = await apiFetch('/api/providers/open_login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({provider})
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            showToast('Opened login page: ' + data.url, 'success');
+        } else {
+            showToast('Error: ' + (data.error || 'unknown'), 'error');
+        }
+    } catch (err) {
+        showToast('Request failed', 'error');
+    }
+}
+
+async function checkStatus(btn) {
+    btn.disabled = true;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<span class="material-icons-round icon-md spin">autorenew</span> Checking…';
+    try {
+        const res = await apiFetch('/api/providers/status', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('Health check complete', 'success');
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            showToast(data.error || `Health check failed (HTTP ${res.status})`, 'error');
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+    } catch (err) {
+        showToast('Request failed', 'error');
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+}
+
+async function runNext(btn) {
+    const confirmed = await confirmAction({
+        title: 'Run next validated plan',
+        message: 'The newest validated plan in the inbox will be executed by the local runtime through the Defender safety layer.',
+        details: {
+            'Source': 'inbox/validated_plans/',
+            'Validated': '{{ validated_plans }} plan(s) queued',
+            'Mode': 'local execution',
+        },
+        confirmLabel: 'Run plan',
+    });
+    if (!confirmed) return;
+
+    btn.disabled = true;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<span class="material-icons-round icon-md spin">autorenew</span> Running…';
+    try {
+        const res = await apiFetch('/api/providers/run_next', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            showToast('Plan execution finished', 'success');
+            setTimeout(() => window.location.reload(), 800);
+        } else if (data.status === 'pending_approval') {
+            showToast(data.message || 'Plan requires approval — see Approvals page', 'warning');
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        } else if (data.status === 'no_plans') {
+            showToast('No validated plans in the queue', 'warning');
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        } else {
+            showToast('Error: ' + (data.error || 'Unknown'), 'error');
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+    } catch (err) {
+        showToast('Request failed', 'error');
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+}
+</script>
+<style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+{% endblock %}

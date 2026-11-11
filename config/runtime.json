@@ -1,0 +1,13 @@
+{
+  "max_actions_per_plan": 50,
+  "max_plan_retries": 3,
+  "action_timeout_seconds": 120,
+  "auto_verify_actions": true,
+  "enable_complexity_engine": true,
+  "log_level": "INFO",
+  "runs_keep_last": 100,
+  "observations_keep_last": 200,
+  "enable_git_diff_capture": true,
+  "shell_default_timeout": 60,
+  "shell_background_poll_interval": 2
+}

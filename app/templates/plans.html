@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block page_title %}Plans{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>Execution Plans</h2>
+    <p>Validated plans are ready for the ManagerAgent. The Defender checks every action before execution.</p>
+</div>
+
+<div class="grid-3 gap-4">
+    <div class="glass-card flex-col flex card-top-secondary">
+        <h3 class="flex items-center gap-2 m-0 mb-4">
+            <span class="material-icons-round text-secondary">drafts</span>
+            Candidate Plans
+        </h3>
+        <div class="bg-dark-30 border-glass rounded-lg p-3 flex-1 overflow-y-auto max-h-400">
+            {% if candidate_plans %}
+                <div class="flex flex-col m-0 p-0 gap-2">
+                    {% for p in candidate_plans %}
+                    <div class="p-2 bg-dark-20 border-glass rounded-md font-mono text-sm flex items-center gap-2">
+                        <span class="material-icons-round text-secondary icon-md">description</span>
+                        {{ p }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="flex flex-col items-center justify-center h-full text-secondary opacity-50 py-8">
+                    <span class="material-icons-round mb-2 text-2xl">inbox</span>
+                    <p class="text-sm">No candidate plans</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="glass-card flex-col flex card-top-success">
+        <h3 class="flex items-center gap-2 m-0 mb-4">
+            <span class="material-icons-round text-success">check_circle</span>
+            Validated Plans
+        </h3>
+        <div class="bg-dark-30 border-glass rounded-lg p-3 flex-1 overflow-y-auto max-h-400">
+            {% if validated_plans %}
+                <div class="flex flex-col m-0 p-0 gap-2">
+                    {% for p in validated_plans %}
+                    <div class="p-2 bg-dark-20 border-glass rounded-md font-mono text-sm flex items-center gap-2 border-l-success">
+                        <span class="material-icons-round text-success icon-md">task_alt</span>
+                        {{ p }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="flex flex-col items-center justify-center h-full text-secondary opacity-50 py-8">
+                    <span class="material-icons-round mb-2 text-2xl">fact_check</span>
+                    <p class="text-sm">No validated plans</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="glass-card flex-col flex card-top-danger">
+        <h3 class="flex items-center gap-2 m-0 mb-4">
+            <span class="material-icons-round text-danger">cancel</span>
+            Rejected Plans
+        </h3>
+        <div class="bg-dark-30 border-glass rounded-lg p-3 flex-1 overflow-y-auto max-h-400">
+            {% if rejected_plans %}
+                <div class="flex flex-col m-0 p-0 gap-2">
+                    {% for p in rejected_plans %}
+                    <div class="p-2 bg-dark-20 border-glass rounded-md font-mono text-sm flex items-center gap-2 border-l-danger">
+                        <span class="material-icons-round text-danger icon-md">error_outline</span>
+                        {{ p }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="flex flex-col items-center justify-center h-full text-secondary opacity-50 py-8">
+                    <span class="material-icons-round mb-2 text-2xl">delete_outline</span>
+                    <p class="text-sm">No rejected plans</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

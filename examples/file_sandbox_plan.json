@@ -1,0 +1,44 @@
+{
+  "plan_id": "plan-file-sbx-001",
+  "objective_id": "obj-007",
+  "title": "File Sandboxing Test",
+  "goal": "Test directory traversal prevention",
+  "assumptions": [],
+  "allowed_paths": [],
+  "allowed_domains": [],
+  "requested_tools": ["FileWorker"],
+  "risk_level": "high",
+  "actions": [
+    {
+      "action_id": "act-f2",
+      "worker": "FileWorker",
+      "type": "search",
+      "reason": "Legitimate search inside workspace",
+      "params": {
+        "dir": "workers",
+        "query": "class FileWorker"
+      },
+      "risk_level": "low",
+      "requires_approval": false
+    }
+  ],
+  "verification": "Check observation",
+  "rollback": "None",
+  "approval": false,
+  "expected_outputs": ["success status"],
+  "stop_conditions": [],
+  "complexity": {
+    "problem_type": "scripting",
+    "estimated_depth": "shallow",
+    "requires_research": false,
+    "requires_context_recovery": false,
+    "requires_human_input": false,
+    "known_unknowns": [],
+    "assumptions": [],
+    "open_questions": [],
+    "decomposition": {
+      "milestones": ["Blocked hack", "Searched file"],
+      "next_smallest_action": "Run plan"
+    }
+  }
+}

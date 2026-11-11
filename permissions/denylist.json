@@ -1,0 +1,9 @@
+{
+  "commands": [
+    "rm -rf /",
+    "del /s /q C:\\",
+    "git push",
+    "docker rm -f",
+    "format C:"
+  ]
+}

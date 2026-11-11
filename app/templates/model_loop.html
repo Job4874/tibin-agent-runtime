@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block page_title %}Model Loop & Handoff{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>Model Loop &amp; BoodleBox Handoff</h2>
+    <p>The model thinks; the runtime acts. This page monitors the loop between the provider and the local runtime, including the watcher daemon.</p>
+</div>
+
+<div class="grid-2 gap-4">
+    <div class="glass-card">
+        <h3>
+            <span class="material-icons-round text-accent">all_inclusive</span>
+            Watcher Status
+        </h3>
+        <div class="mt-3">
+            <div class="status-badge {% if daemon_status.status == 'running' %}status-running{% elif daemon_status.status == 'paused' %}status-pending{% else %}status-stopped{% endif %}">
+                {{ daemon_status.status | upper }}
+            </div>
+            <p class="mt-2 text-sm text-secondary">{{ daemon_status.message or "No message" }}</p>
+            <div class="action-row mt-4">
+                <button class="btn btn-sm" onclick="generatePrompt(this)">
+                    <span class="material-icons-round icon-md">edit_note</span> Generate Next Prompt
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="startDaemon(this)" {% if daemon_status.status in ['running', 'paused'] %}disabled{% endif %}>
+                    <span class="material-icons-round icon-md">play_arrow</span> Start Watcher
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="stopDaemon(this)" {% if daemon_status.status == 'stopped' %}disabled{% endif %}>
+                    <span class="material-icons-round icon-md">stop</span> Stop Watcher
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <h3>
+            <span class="material-icons-round text-secondary">description</span>
+            Latest Prompt
+        </h3>
+        {% if latest_prompt %}
+        <pre class="mt-2 max-h-250">{{ latest_prompt }}</pre>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-icons-round">drafts</span>
+            <p>No prompt generated yet.</p>
+            <span class="empty-hint">Use “Generate Next Prompt” to create one from current runtime state.</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="glass-card mt-4">
+    <h3>
+        <span class="material-icons-round text-secondary">data_object</span>
+        Latest Model Request
+    </h3>
+    {% if latest_request %}
+    <pre class="mt-2 max-h-250">{{ latest_request }}</pre>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons-round">code_off</span>
+        <p>No model request recorded yet.</p>
+        <span class="empty-hint">Requests are written to outbox/model_requests/ during the model loop.</span>
+    </div>
+    {% endif %}
+</div>
+
+<div class="grid-3 mt-4 gap-4">
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-secondary">drafts</span> Candidate Plans</h3>
+        {% if candidate_plans %}
+            <div class="mt-2">{% for p in candidate_plans %}<div class="font-mono text-xs text-secondary mb-1">• {{ p }}</div>{% endfor %}</div>
+        {% else %}
+            <div class="empty-state"><span class="material-icons-round">inbox</span><p>None</p></div>
+        {% endif %}
+    </div>
+
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-success">task_alt</span> Validated Plans</h3>
+        {% if validated_plans %}
+            <div class="mt-2">{% for p in validated_plans %}<div class="font-mono text-xs text-secondary mb-1">• {{ p }}</div>{% endfor %}</div>
+        {% else %}
+            <div class="empty-state"><span class="material-icons-round">fact_check</span><p>None</p></div>
+        {% endif %}
+    </div>
+
+    <div class="glass-card">
+        <h3><span class="material-icons-round text-danger">cancel</span> Rejected Plans</h3>
+        {% if rejected_plans %}
+            <div class="mt-2">{% for p in rejected_plans %}<div class="font-mono text-xs text-secondary mb-1">• {{ p }}</div>{% endfor %}</div>
+        {% else %}
+            <div class="empty-state"><span class="material-icons-round">delete_outline</span><p>None</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setBusy(btn, label) {
+    btn.disabled = true;
+    btn._orig = btn.innerHTML;
+    btn.innerHTML = `<span class="material-icons-round icon-md spin">autorenew</span> ${label}`;
+}
+function clearBusy(btn) {
+    btn.disabled = false;
+    if (btn._orig) btn.innerHTML = btn._orig;
+}
+
+async function generatePrompt(btn) {
+    setBusy(btn, 'Generating…');
+    try {
+        const res = await apiFetch('/api/model_loop/generate_prompt', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            showToast('Prompt generated', 'success');
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            showToast('Error: ' + (data.error || data.stderr || 'Unknown error'), 'error');
+            clearBusy(btn);
+        }
+    } catch (e) {
+        showToast('Request failed', 'error');
+        clearBusy(btn);
+    }
+}
+
+async function startDaemon(btn) {
+    const confirmed = await confirmAction({
+        title: 'Start watcher daemon',
+        message: 'A background process will continuously validate and execute inbox plans (up to 50 loops). The Defender still blocks risky actions.',
+        details: { 'Command': 'runtime.py --watch --max-loops 50', 'Mode': 'background daemon' },
+        confirmLabel: 'Start watcher',
+    });
+    if (!confirmed) return;
+
+    setBusy(btn, 'Starting…');
+    try {
+        const res = await apiFetch('/api/daemon/start', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            showToast(`Watcher started (pid ${data.pid})`, 'success');
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            showToast(data.error || 'Failed to start watcher', 'error');
+            clearBusy(btn);
+        }
+    } catch (e) {
+        showToast('Request failed', 'error');
+        clearBusy(btn);
+    }
+}
+
+async function stopDaemon(btn) {
+    setBusy(btn, 'Stopping…');
+    try {
+        const res = await apiFetch('/api/daemon/stop', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            showToast('Watcher stopped', 'success');
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            showToast(data.error || 'Failed to stop watcher', 'error');
+            clearBusy(btn);
+        }
+    } catch (e) {
+        showToast('Request failed', 'error');
+        clearBusy(btn);
+    }
+}
+</script>
+<style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+{% endblock %}

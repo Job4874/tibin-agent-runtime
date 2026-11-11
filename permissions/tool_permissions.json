@@ -1,0 +1,14 @@
+{
+  "allowed_tools": [
+    "ShellWorker",
+    "FileWorker",
+    "GitWorker",
+    "BrowserWorker",
+    "ResearchWorker",
+    "VerifierWorker",
+    "MemoryWorker",
+    "ReportWorker",
+    "CoderWorker"
+  ],
+  "blocked_tools": []
+}

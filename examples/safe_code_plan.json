@@ -1,0 +1,59 @@
+{
+  "plan_id": "plan-safe-001",
+  "objective_id": "obj-001",
+  "title": "Safe Code Plan",
+  "goal": "Verify environment and list files.",
+  "assumptions": ["Python and Git are installed"],
+  "allowed_paths": [".\\"],
+  "allowed_domains": [],
+  "requested_tools": ["ShellWorker", "FileWorker", "ReportWorker"],
+  "risk_level": "low",
+  "actions": [
+    {
+      "action_id": "act-1",
+      "worker": "ShellWorker",
+      "type": "execute",
+      "reason": "Check Python version",
+      "params": {"command": "python --version"},
+      "risk_level": "low",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-2",
+      "worker": "ShellWorker",
+      "type": "execute",
+      "reason": "Check Git status",
+      "params": {"command": "git status"},
+      "risk_level": "low",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-3",
+      "worker": "FileWorker",
+      "type": "list",
+      "reason": "List root directory files",
+      "params": {"path": ".\\"},
+      "risk_level": "low",
+      "requires_approval": false
+    }
+  ],
+  "verification": "Check exit codes",
+  "rollback": "None",
+  "approval": false,
+  "expected_outputs": ["stdout from commands"],
+  "stop_conditions": ["failure of any command"],
+  "complexity": {
+    "problem_type": "coding",
+    "estimated_depth": "simple",
+    "requires_research": false,
+    "requires_context_recovery": false,
+    "requires_human_input": false,
+    "known_unknowns": [],
+    "assumptions": [],
+    "open_questions": [],
+    "decomposition": {
+      "milestones": ["Environment checked"],
+      "next_smallest_action": ""
+    }
+  }
+}

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block page_title %}Tasks{% endblock %}
+
+{% block content %}
+<div class="page-intro flex justify-between items-start gap-4 flex-wrap">
+    <div>
+        <h2>Autonomous Tasks</h2>
+        <p>Plan replay runs locally without API keys. Autonomous mode requires <code>OPENROUTER_API_KEY</code> in <code>.env</code> and never falls back to BoodleBox.</p>
+    </div>
+    <div class="stat-block self-start">
+        <span class="field-label m-0">Autonomous Brain</span>
+        <div class="flex items-center gap-2 mt-1">
+            <span class="status-badge {% if brain.configured %}status-running{% else %}status-stopped{% endif %}">
+                {{ brain.status }}
+            </span>
+            <span class="text-sm font-mono">{{ brain.label }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2 gap-4">
+    <div class="glass-card flex-col flex card-top-cyan">
+        <h3>
+            <span class="material-icons-round text-accent-cyan">play_circle_outline</span>
+            Plan Replay <span class="status-badge status-stopped ml-2">no api key</span>
+        </h3>
+        <p class="text-sm text-secondary mb-4">Runs a safe example plan through ShellWorker, FileWorker, the Defender, and trace logging.</p>
+
+        <button id="run-plan-btn" class="btn btn-primary mb-4 self-start" onclick="runSafePlan(this)">
+            <span class="material-icons-round icon-base">play_arrow</span> Run Safe Plan
+        </button>
+
+        <div class="terminal-panel flex-1 flex-col flex">
+            <div class="terminal-panel-bar">
+                <span>Result Output</span>
+                <button class="btn btn-ghost btn-xs" onclick="clearOutput('plan-result')">Clear</button>
+            </div>
+            <pre id="plan-result" class="output-stream" style="border:none;border-radius:0;flex:1;">Idle — no plan has been run in this session.</pre>
+        </div>
+    </div>
+
+    <div class="glass-card flex-col flex card-top-purple">
+        <h3>
+            <span class="material-icons-round text-accent-purple">smart_toy</span>
+            Autonomous <span class="status-badge status-stopped ml-2">openrouter</span>
+        </h3>
+        <p class="text-sm text-secondary mb-4">Natural-language goal. Fails closed if <code>OPENROUTER_API_KEY</code> is missing.</p>
+
+        <div class="mb-4 flex gap-2">
+            <input id="goal-input" type="text" class="flex-1 font-mono"
+                placeholder="List all .py files in the project root…"
+                {% if not brain.configured %}disabled{% endif %}
+                onkeydown="if(event.key==='Enter') runAutonomous()">
+            <button id="run-auto-btn" class="btn btn-primary" onclick="runAutonomous()" {% if not brain.configured %}disabled{% endif %}>
+                <span class="material-icons-round icon-base">send</span> Run
+            </button>
+        </div>
+
+        {% if not brain.configured %}
+        <div class="callout callout-warning mb-4">
+            <span class="material-icons-round">key_off</span>
+            <span>Autonomous mode is disabled. Set <code>OPENROUTER_API_KEY</code> in <code>.env</code> and restart the server to enable it.</span>
+        </div>
+        {% endif %}
+
+        <div class="terminal-panel flex-1 flex-col flex">
+            <div class="terminal-panel-bar">
+                <span>Result Output</span>
+                <button class="btn btn-ghost btn-xs" onclick="clearOutput('auto-result')">Clear</button>
+            </div>
+            <pre id="auto-result" class="output-stream" style="border:none;border-radius:0;flex:1;">Idle — no autonomous run in this session.</pre>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function clearOutput(id) {
+    document.getElementById(id).textContent = 'Cleared.';
+}
+
+function scrollToBottom(id) {
+    const el = document.getElementById(id);
+    el.scrollTop = el.scrollHeight;
+}
+
+function setRunning(btnEl, spinner = true) {
+    if (spinner) {
+        btnEl.disabled = true;
+        btnEl._orig = btnEl.innerHTML;
+        btnEl.innerHTML = '<span class="material-icons-round icon-base spin">autorenew</span> Running…';
+    } else {
+        btnEl.disabled = false;
+        if (btnEl._orig) btnEl.innerHTML = btnEl._orig;
+    }
+}
+
+async function runSafePlan(btn) {
+    const el = document.getElementById('plan-result');
+
+    const confirmed = await confirmAction({
+        title: 'Run plan replay',
+        message: 'This executes real shell and file actions on this machine through the Defender safety layer.',
+        details: {
+            'Plan': 'examples/safe_code_plan.json',
+            'Max turns': '10',
+            'Mode': 'local replay (no API key)',
+        },
+        confirmLabel: 'Run plan',
+    });
+    if (!confirmed) return;
+
+    el.textContent = '▶ Running safe_code_plan.json…\n';
+    setRunning(btn);
+    try {
+        const res = await apiFetch('/api/tasks/run_loop', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({plan: 'examples/safe_code_plan.json', max_turns: 10})
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            el.textContent = `✘ Request failed (HTTP ${res.status})\n\n` + JSON.stringify(data, null, 2);
+            showToast(data.error || 'Plan run failed', 'error');
+            return;
+        }
+        const status = data.status || 'ok';
+        el.textContent = `✔ Status: ${status}\n\n` + JSON.stringify(data, null, 2);
+        scrollToBottom('plan-result');
+        showToast(`Plan finished: ${status}`, status === 'completed' ? 'success' : 'warning');
+    } catch (e) {
+        el.textContent = '✘ Error: ' + e;
+        showToast('Plan run failed', 'error');
+    } finally {
+        setRunning(btn, false);
+    }
+}
+
+async function runAutonomous() {
+    const goal = document.getElementById('goal-input').value.trim();
+    const el = document.getElementById('auto-result');
+    const btn = document.getElementById('run-auto-btn');
+    if (!goal) {
+        showToast('Enter a goal first', 'warning');
+        document.getElementById('goal-input').focus();
+        return;
+    }
+
+    const confirmed = await confirmAction({
+        title: 'Run autonomous agent',
+        message: 'The OpenRouter brain will plan and execute actions on this machine. The Defender blocks destructive commands, but review the goal before running.',
+        details: {
+            'Goal': goal,
+            'Max turns': '10',
+            'Brain': '{{ brain.label }}',
+            'Mode': 'autonomous (live LLM)',
+        },
+        confirmLabel: 'Run autonomous',
+        danger: true,
+    });
+    if (!confirmed) return;
+
+    el.textContent = `▶ Goal: ${goal}\n\nRunning autonomous agent…\n`;
+    setRunning(btn);
+    try {
+        const res = await apiFetch('/api/tasks/run_autonomous', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({goal, max_turns: 10})
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            el.textContent = `✘ Request failed (HTTP ${res.status})\n\n` + JSON.stringify(data, null, 2);
+            showToast(data.error || 'Autonomous run failed', 'error');
+            return;
+        }
+        const status = data.status || 'ok';
+        el.textContent = `✔ Status: ${status}\n\n` + JSON.stringify(data, null, 2);
+        scrollToBottom('auto-result');
+        showToast(`Autonomous run: ${status}`, status === 'completed' ? 'success' : 'info');
+    } catch (e) {
+        el.textContent = '✘ Error: ' + e;
+        showToast('Autonomous run failed', 'error');
+    } finally {
+        setRunning(btn, false);
+    }
+}
+</script>
+{% endblock %}

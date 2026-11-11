@@ -1,0 +1,50 @@
+{
+  "plan_id": "plan-debug-001",
+  "objective_id": "obj-004",
+  "title": "Complex Debug Plan",
+  "goal": "Simulate complex debug cycle that requires context recovery",
+  "assumptions": [],
+  "allowed_paths": [],
+  "allowed_domains": [],
+  "requested_tools": ["ShellWorker", "ReportWorker", "MemoryWorker"],
+  "risk_level": "medium",
+  "actions": [
+    {
+      "action_id": "act-c1",
+      "worker": "MemoryWorker",
+      "type": "update",
+      "reason": "Log failing component",
+      "params": {"update_type": "what_failed", "data": "Database connection timeout"},
+      "risk_level": "low",
+      "requires_approval": false
+    },
+    {
+      "action_id": "act-c2",
+      "worker": "ShellWorker",
+      "type": "execute",
+      "reason": "Run intentionally failing test to simulate failure",
+      "params": {"command": "python -c \"import sys; sys.exit(1)\""},
+      "risk_level": "low",
+      "requires_approval": false
+    }
+  ],
+  "verification": "Check exit code",
+  "rollback": "None",
+  "approval": false,
+  "expected_outputs": ["failed status"],
+  "stop_conditions": ["always fails"],
+  "complexity": {
+    "problem_type": "debugging",
+    "estimated_depth": "deep",
+    "requires_research": false,
+    "requires_context_recovery": true,
+    "requires_human_input": false,
+    "known_unknowns": ["Root cause of DB timeout"],
+    "assumptions": ["Network is up"],
+    "open_questions": [],
+    "decomposition": {
+      "milestones": ["Simulated failure"],
+      "next_smallest_action": "Check logs"
+    }
+  }
+}

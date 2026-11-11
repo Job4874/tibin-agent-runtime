@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+<div class="page-intro">
+    <h2>Reports</h2>
+    <p>Every run leaves proof. The ReportWorker writes observations and audit trails for every executed plan.</p>
+</div>
+
+<div class="glass-card mb-6">
+    <h3><span class="material-icons-round text-accent">assessment</span> Latest Report</h3>
+    {% if latest_report %}
+    <pre class="mt-2">{{ latest_report }}</pre>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons-round">description</span>
+        <p>No report generated yet.</p>
+        <span class="empty-hint">Run a plan from the Tasks page to generate one.</span>
+    </div>
+    {% endif %}
+</div>
+
+<div class="glass-card">
+    <h3><span class="material-icons-round text-secondary">visibility</span> Latest Observation</h3>
+    {% if latest_observation %}
+    <pre class="mt-2">{{ latest_observation }}</pre>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons-round">visibility_off</span>
+        <p>No observation recorded yet.</p>
+        <span class="empty-hint">Observations are written to observations/latest_observation.json after each run.</span>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
